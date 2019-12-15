@@ -1,8 +1,12 @@
 const cenario = document.querySelector('#cenario');
 const jogo = {
     status: true,
-    velocidade: 1000,
+    velocidade: 700,
     ponto: 0
+};
+const key = {
+    now: 'D',
+    pass: 'D'
 };
 const snake = {
     x: 3,
@@ -25,7 +29,7 @@ const snake = {
         switch (direcao) {
             case 'direita':
                 this.x++;
-                this.moverCorpo(anterior);
+                this.moverCorpo(anterior);                
                 break;
             case 'baixo':
                 this.y++;
@@ -64,6 +68,23 @@ const snake = {
         });
     }
 };
+const comida = {
+    x: 0,
+    y: 0,
+    nascer() {
+        this.x = Math.floor(Math.random() * 10 + 1);
+        this.y = Math.floor(Math.random() * 10 + 1);
+        // if (snake.x == this.x && snake.y == this.y || function() {
+        //     snake.corpo.forEach(x => {
+        //         if (x.x == this.x && x.y == this.y) {
+        //             return true;
+        //         }
+        //     });
+        // }) {
+        //     this.nascer();
+        // }
+    }
+}
 
 function criarCenario() {
     for (let i = 0; i < 10; i++) {
@@ -74,15 +95,24 @@ function criarCenario() {
         }
         cenario.appendChild(tr);
     }
+    document.addEventListener('keypress', (event) => {
+        key.pass = key.now == event.key.toUpperCase()
+            ? key.pass
+            : key.now;
+        key.now = event.key.toUpperCase();
+    });
+    renderizaSnake();
 }
 
 function iniciarJogo() {
     const interval = setInterval(() => {
-        if (!jogo.status) clearInterval(interval);
+        if (!jogo.status) return clearInterval(interval);
 
-
+        limparSnake();
+        mover();
+        comida.nascer();
+        renderizaSnake();
     }, jogo.velocidade);
-
 }
 
 function renderizaSnake() {
@@ -97,7 +127,10 @@ function renderizaSnake() {
 }
 
 function addBackground(x, y, cor) {
-    cenario.querySelector(`tr:nth-child(${y}) td:nth-child(${x})`).style.background = cor;
+    const td = cenario.querySelector(`tr:nth-child(${y}) td:nth-child(${x})`);
+    if (td) {
+        td.style.background = cor;
+    }
 }
 
 function limparSnake() {
@@ -105,4 +138,41 @@ function limparSnake() {
     snake.corpo.forEach(x => {        
         addBackground(x.x, x.y, '#FFF');
     });
+}
+
+function mover() {
+    if (key.now == 'D' && key.pass != 'A') {
+        snake.mover('direita');
+    } else if (key.now == 'S' && key.pass != 'W') {
+        snake.mover('baixo');
+    } else if (key.now == 'A' && key.pass != 'D') {
+        snake.mover('esquerda');
+    } else if (key.now == 'W' && key.pass != 'S') {
+        snake.mover('cima');
+    } else if (key.pass == 'D') {
+        snake.mover('direita');
+    } else if (key.pass == 'S') {
+        snake.mover('baixo');
+    } else if (key.pass == 'A') {
+        snake.mover('esquerda');
+    } else if (key.pass == 'W') {
+        snake.mover('cima');
+    }
+    verificarColisao();
+}
+
+function verificarColisao() {
+    if (snake.x > 10) {
+        snake.x = 1;
+    } else if (snake.y > 10) {
+        snake.y = 1;
+    } else if (snake.x < 1) {
+        snake.x = 10;
+    } else if (snake.y < 1) {
+        snake.y = 10;
+    }
+}
+
+function renderizaComida() {
+    addBackground(comida.x, comida.y, 'red');
 }
