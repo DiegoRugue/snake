@@ -1,8 +1,8 @@
 const cenario = document.querySelector('#cenario');
 const jogo = {
     status: true,
-    velocidade: 700,
-    ponto: 0
+    velocidade: 300,
+    ponto: 1
 };
 const key = {
     now: 'D',
@@ -29,7 +29,7 @@ const snake = {
         switch (direcao) {
             case 'direita':
                 this.x++;
-                this.moverCorpo(anterior);                
+                this.moverCorpo(anterior);
                 break;
             case 'baixo':
                 this.y++;
@@ -74,15 +74,12 @@ const comida = {
     nascer() {
         this.x = Math.floor(Math.random() * 10 + 1);
         this.y = Math.floor(Math.random() * 10 + 1);
-        // if (snake.x == this.x && snake.y == this.y || function() {
-        //     snake.corpo.forEach(x => {
-        //         if (x.x == this.x && x.y == this.y) {
-        //             return true;
-        //         }
-        //     });
-        // }) {
-        //     this.nascer();
-        // }
+        if (snake.x == this.x && snake.y == this.y) return this.nascer();
+        snake.corpo.forEach(x => {
+            if (x.x == this.x && x.y == this.y) {
+                return this.nascer();
+            }
+        });
     }
 }
 
@@ -102,22 +99,23 @@ function criarCenario() {
         key.now = event.key.toUpperCase();
     });
     renderizaSnake();
+    comida.nascer();
+    renderizaComida();
+    document.querySelector('#pontos').innerHTML = jogo.ponto;
 }
 
 function iniciarJogo() {
     const interval = setInterval(() => {
         if (!jogo.status) return clearInterval(interval);
 
-        limparSnake();
-        mover();
-        comida.nascer();
-        renderizaSnake();
+        controlaJogo();
+
     }, jogo.velocidade);
 }
 
 function renderizaSnake() {
     addBackground(snake.x, snake.y, 'blue');
-    snake.corpo.forEach((x, i) => {        
+    snake.corpo.forEach((x, i) => {
         if (i == snake.corpo.length - 1) {
             addBackground(x.x, x.y, 'black');
         } else {
@@ -135,7 +133,7 @@ function addBackground(x, y, cor) {
 
 function limparSnake() {
     addBackground(snake.x, snake.y, '#FFF');
-    snake.corpo.forEach(x => {        
+    snake.corpo.forEach(x => {
         addBackground(x.x, x.y, '#FFF');
     });
 }
@@ -158,10 +156,10 @@ function mover() {
     } else if (key.pass == 'W') {
         snake.mover('cima');
     }
-    verificarColisao();
+    verificarColisaoParede();
 }
 
-function verificarColisao() {
+function verificarColisaoParede() {
     if (snake.x > 10) {
         snake.x = 1;
     } else if (snake.y > 10) {
@@ -173,6 +171,48 @@ function verificarColisao() {
     }
 }
 
+function controlaJogo() {
+    if (snake.x == comida.x && snake.y == comida.y) {
+        incrementarPontos();
+        incrementarCorpo();
+        comida.nascer();
+        renderizaComida();
+    }
+    limparSnake();
+    mover();
+    renderizaSnake();
+    verificarColisaoCorpo();
+}
+
 function renderizaComida() {
     addBackground(comida.x, comida.y, 'red');
 }
+
+function incrementarPontos() {
+    jogo.ponto++;
+    document.querySelector('#pontos').innerHTML = jogo.ponto;
+}
+
+function incrementarCorpo() {
+    const corpo = {
+        x: 0,
+        y: 0
+    }
+    snake.corpo.push(corpo);
+}
+
+function verificarColisaoCorpo() {
+    snake.corpo.forEach(x => {
+        if (snake.x == x.x && snake.y == x.y) {
+            jogo.status = false;
+            alert('Perdeu!');
+        }
+    });
+}
+
+// function incrementarVelocidade(interval) {
+//     if (jogo.ponto % 2 == 0 && jogo.velocidade > 100) {
+//         jogo.velocidade -= 100;
+//         setInterval(interval);
+//     }
+// }
